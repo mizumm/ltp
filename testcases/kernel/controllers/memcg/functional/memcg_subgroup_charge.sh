@@ -20,8 +20,15 @@ TST_CNT=3
 test_subgroup()
 {
 	mkdir subgroup
-	echo $1 > memory.limit_in_bytes
 	echo $2 > subgroup/memory.limit_in_bytes
+
+	# v5.9 and later kernel, percpu memory which is needed to create
+	# the subgroup is charged to the parent's usage.
+	# Extend the parent limit so that we can observe the rss of
+	# memcg_process correctly.
+	pre_used=$(cat memory.usage_in_bytes)
+	newlimit=$(( $1 + pre_used ))
+	echo $newlimit > memory.limit_in_bytes
 
 	start_memcg_process --mmap-anon -s $PAGESIZES
 
